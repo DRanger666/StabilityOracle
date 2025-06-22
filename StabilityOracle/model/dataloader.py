@@ -262,8 +262,25 @@ def load_raw_graph(jsonl: dict, device: torch.device=None) -> dict:
             .repeat(20, 1, 1) # Repeated for the 20-way batching.
         )
 
-        # 4. Padding Mask
+        # 4. Padding Mask ("Red-Herring")
         # A tensor of 1s and 0s to inform the attention mechanism which nodes are real atoms vs. padding.
+        # Research Note on the `mask` tensor:
+        #
+        # At first glance, this tensor appears to be an incorrect padding mask, as it assigns
+        # a value of '1' to all atom positions, including those that are padded with zeros.
+        # This is intentional but potentially confusing.
+        #
+        # This `mask` tensor is NOT the final attention mask used by the Transformer layers.
+        # Instead, the true, effective padding and neighborhood masking is handled dynamically
+        # inside the `Backbone.forward` method in `blocks.py`. There, a new mask is created
+        # based on the pairwise 3D distances between atoms (`relative_dis`). Padded atoms,
+        # having coordinates at the origin, will be "too far" from real atoms and will thus
+        # be implicitly masked out by the distance-based attention bias.
+        #
+        # Therefore, this tensor of all ones should be considered a placeholder. Its original
+        # purpose may have been for an experimental feature (e.g., explicitly masking out
+        # certain real atoms), but in the final model, its role is superseded by the more
+        # sophisticated dynamic masking in the `Backbone`.
         mask = torch.ones([max_atoms]).float().unsqueeze(0).repeat(20, 1)
 
         wt_AA = ss['label']
