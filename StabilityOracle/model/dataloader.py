@@ -291,7 +291,12 @@ def load_raw_graph(jsonl: dict, device: torch.device=None) -> dict:
         # target amino acid. This allows for prediction of all 20 ΔΔG values
         # in one forward pass. This is a key contributor to the framework's computational
         # efficiency (see Supplementary Table 1 for performance benchmarks).
+        
+        # The following line of code creates a tensor of shape [20, 2]. Each row contains the
+        # integer index for the wild-type amino acid and the integer index for one
+        # of the 20 possible amino acids.
         from_to_pairs = torch.as_tensor(
+        # For every possible target amino acid, look up its integer index in AA_INDEX
             [ [ AA_INDEX[wt_AA], AA_INDEX[to_AA] ] for to_AA in AMINO_ACIDS],
             dtype=torch.long,
         )
